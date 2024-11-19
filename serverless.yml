@@ -1,0 +1,50 @@
+service: t2d--backend
+app: t2d-backend-app
+
+useDotenv: true
+
+plugins:
+  - serverless-offline
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  role: role
+  memorySize: 512
+  environment:
+    DB_DATABASE: ${env:DB_DATABASE}
+    DB_USERNAME: ${env:DB_USERNAME}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_SYNCHRONIZE: ${env:DB_SYNCHRONIZE}
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: ${env:DB_PORT}
+    BUCKET_NAME: ${env:BUCKET_NAME}
+    JWT_SECRET: ${env:JWT_SECRET}
+    #JWT_EXPIRATION_TIME: ${env:JWT_EXPIRATION_TIME}
+    EMAIL_USER: ${env:EMAIL_USER}
+    EMAIL_PASSWORD: ${env:EMAIL_PASSWORD}
+functions:
+  main:
+    handler: dist/src/lambda.handler
+    timeout: 60 # timeout for development using debug (prod env is 30 seconds)
+    events:
+      - http:
+          method: ANY
+          path: /
+          cors: true
+      - http:
+          method: ANY
+          path: '{proxy+}'
+          cors: true
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
